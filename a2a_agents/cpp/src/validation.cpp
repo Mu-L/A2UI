@@ -146,8 +146,10 @@ void _validate_component_integrity(const nlohmann::json& components, const RefFi
     std::unordered_set<std::string> ids;
     
     for (const auto& comp : components) {
+        if (!comp.is_object()) { throw std::invalid_argument("Component must be an object."); }
         auto id_it = comp.find(ID);
-        if (id_it == comp.end() || !id_it->is_string()) continue;
+        if (id_it == comp.end()) { throw std::invalid_argument("Component missing 'id' field."); } 
+        if (!id_it->is_string()) { throw std::invalid_argument("Component 'id' must be a string."); }
         std::string comp_id = id_it->get<std::string>();
 
         if (ids.count(comp_id)) {
@@ -176,8 +178,10 @@ void _validate_topology(const nlohmann::json& components, const RefFieldsMap& re
     std::unordered_set<std::string> all_ids;
 
     for (const auto& comp : components) {
+        if (!comp.is_object()) { throw std::invalid_argument("Component must be an object."); }
         auto id_it = comp.find(ID);
-        if (id_it == comp.end() || !id_it->is_string()) continue;
+        if (id_it == comp.end()) { throw std::invalid_argument("Component missing 'id' field."); } 
+        if (!id_it->is_string()) { throw std::invalid_argument("Component 'id' must be a string."); }
         std::string comp_id = id_it->get<std::string>();
 
         all_ids.insert(comp_id);
@@ -286,14 +290,6 @@ void _validate_recursion_and_paths(const nlohmann::json& data) {
 } // namespace
 
 void validate_a2ui_json(const nlohmann::json& a2ui_json, const nlohmann::json& a2ui_schema) {
-    nlohmann::json_schema::json_validator validator;
-    try {
-        validator.set_root_schema(a2ui_schema);
-        validator.validate(a2ui_json);
-    } catch (const std::exception& e) {
-        throw std::invalid_argument(std::string("Schema validation failed: ") + e.what());
-    }
-
     auto process_message = [&](const nlohmann::json& message) {
         if (!message.is_object()) return;
 
@@ -313,6 +309,14 @@ void validate_a2ui_json(const nlohmann::json& a2ui_json, const nlohmann::json& a
         }
     } else {
         process_message(a2ui_json);
+    }
+
+    nlohmann::json_schema::json_validator validator;
+    try {
+        validator.set_root_schema(a2ui_schema);
+        validator.validate(a2ui_json);
+    } catch (const std::exception& e) {
+        throw std::invalid_argument(std::string("Schema validation failed: ") + e.what());
     }
 }
 

@@ -25,6 +25,9 @@ namespace a2ui {
  *
  * The payload can be a single message object or an array of message objects.
  *
+ * Note: Does not support streaming or partial messages. 
+ * TODO: Support streaming.
+ *
  * Checks performed:
  * 1.  **JSON Schema Validation**: Ensures payload adheres to the A2UI schema.
  * 2.  **Component Integrity**:
