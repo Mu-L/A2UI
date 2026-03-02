@@ -82,7 +82,7 @@ window.addEventListener("message", async (event) => {
       }
     } else {
       if (inner && inner.contentWindow) {
-        inner.contentWindow.postMessage(event.data, "*");
+        inner.contentWindow.postMessage(event.data, OWN_ORIGIN);
       }
     }
   } else if (event.source === inner.contentWindow) {

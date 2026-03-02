@@ -185,6 +185,8 @@ export class McpAppsCustomComponent extends Root {
           context.push({ key, value: { literalNumber: value } });
         } else if (typeof value === "boolean") {
           context.push({ key, value: { literalBoolean: value } });
+        } else if (value !== null && typeof value === 'object') {
+          context.push({ key, value: { literalString: JSON.stringify(value) } });
         }
       }
     }

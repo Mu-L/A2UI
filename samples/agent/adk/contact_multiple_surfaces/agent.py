@@ -233,10 +233,13 @@ class ContactAgent:
 
         from mcp import ClientSession
         from mcp.client.sse import sse_client
+        import os
+
+        sse_url = os.environ.get("FLOOR_PLAN_SERVER_URL", "http://127.0.0.1:8000/sse")
 
         try:
             # Connect to the persistent Starlette SSE server
-            async with sse_client("http://127.0.0.1:8000/sse") as (read, write):
+            async with sse_client(sse_url) as (read, write):
                 async with ClientSession(read, write) as mcp_session:
                     await mcp_session.initialize()
 
@@ -247,11 +250,18 @@ class ContactAgent:
                         raise ValueError("No content returned from floor plan server")
                         
                     html_content = result.contents[0].text
+        except ValueError as e:
+            logger.error(f"Invalid floor plan data: {e}")
+            yield {
+                "is_task_complete": True,
+                "content": f"Failed to load floor plan data: {str(e)}"
+            }
+            return
         except Exception as e:
             logger.error(f"Failed to fetch floor plan from SSE server: {e}")
             yield {
                 "is_task_complete": True,
-                "content": f"Failed to load floor plan: {str(e)}"
+                "content": f"Failed to connect to floor plan server: {str(e)}"
             }
             return
 

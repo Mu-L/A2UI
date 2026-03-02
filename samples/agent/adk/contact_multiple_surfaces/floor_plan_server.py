@@ -23,6 +23,9 @@ async def read_resource(uri: str) -> str | bytes:
     if str(uri) != RESOURCE_URI:
         raise ValueError(f"Unknown resource: {uri}")
         
+    import os
+    agent_static_url = os.environ.get("AGENT_STATIC_URL", "http://localhost:10004")
+    
     html = """<!DOCTYPE html>
 <html lang="en">
 
@@ -106,7 +109,7 @@ async def read_resource(uri: str) -> str | bytes:
 <body>
     <div id="viewport">
         <div id="container">
-            <img id="floorplan" src="http://localhost:10004/static/floorplan.png" alt="Office Floor Plan">
+            <img id="floorplan" src="__AGENT_STATIC_URL__/static/floorplan.png" alt="Office Floor Plan">
             <div id="tooltip" class="tooltip"></div>
         </div>
     </div>
@@ -265,6 +268,7 @@ async def read_resource(uri: str) -> str | bytes:
     </script>
 </body>
 </html>"""
+    html = html.replace("__AGENT_STATIC_URL__", agent_static_url)
     return html
 
 import uvicorn
