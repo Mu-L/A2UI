@@ -37,9 +37,9 @@ bridge.oncalltool = async (params: any) => {
     // Forward tool calls to parent if needed, or handle locally
     // For now, we just log
     console.log('[Sandbox] Tool call:', params);
-    // We can also postMessage back to parent manually if bridge doesn't handle it
-    // implementation of forwarding logic would go here
-     // For now, throw to indicate not implemented in sandbox
+    // We can also postMessage back to parent manually if bridge doesn't handle it.
+    // The implementation of forwarding logic would go here
+    // For now, throw to indicate not implemented in sandbox
     throw new Error('Tool execution not supported in sandbox directly');
 };
 
