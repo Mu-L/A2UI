@@ -35,7 +35,7 @@ export class TextField extends Root {
   accessor label: Primitives.StringValue | null = null;
 
   @property()
-  accessor textFieldType: string | null = null;
+  accessor textFieldType: Types.ResolvedTextField["textFieldType"] | null = null;
 
   @property()
   accessor validationRegexp: string | null = null;

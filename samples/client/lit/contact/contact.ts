@@ -58,7 +58,9 @@ export class A2UIContactFinder extends SignalWatcher(LitElement) {
   accessor theme: v0_8.Types.Theme = uiTheme;
 
   @provide({ context: UI.Context.markdown })
-  accessor markdownRenderer: v0_8.Types.MarkdownRenderer = renderMarkdown as any;
+  accessor markdownRenderer: v0_8.Types.MarkdownRenderer = async (text, options) => {
+    return renderMarkdown(text, options);
+  };
 
   @state()
   accessor #requesting = false;
