@@ -299,7 +299,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .action=${node.properties.action}
             .childComponents=${[node.properties.child]}
-            .primary=${node.properties.primary}
+            .primary=${(node.properties as any).primary}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-button>`;
         }
@@ -422,7 +422,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath}
             .label=${node.properties.label}
             .text=${node.properties.text}
-            .textFieldType=${node.properties.textFieldType}
+            .textFieldType=${(node.properties as any).textFieldType}
             .validationRegexp=${node.properties.validationRegexp}
             .enableCustomElements=${this.enableCustomElements}
           ></a2ui-textfield>`;

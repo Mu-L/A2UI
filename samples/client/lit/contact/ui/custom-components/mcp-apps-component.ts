@@ -64,7 +64,7 @@ export class McpAppsCustomComponent extends Root {
   @query("iframe")
   accessor iframe!: HTMLIFrameElement;
 
-  #bridge?: AppBridge;
+  private bridge?: AppBridge;
 
   override render() {
     // Default to aspect ratio if no height. Use 16:9 or 4:3.
@@ -83,20 +83,20 @@ export class McpAppsCustomComponent extends Root {
 
   override updated(changedProperties: Map<string, any>) {
     super.updated(changedProperties);
-    if (!this.#bridge && this.htmlContent && this.iframe) {
-      this.#initializeSandbox();
+    if (!this.bridge && this.htmlContent && this.iframe) {
+      this.initializeSandbox();
     }
   }
 
   override disconnectedCallback() {
-    if (this.#bridge) {
-      this.#bridge.close();
-      this.#bridge = undefined;
+    if (this.bridge) {
+      this.bridge.close();
+      this.bridge = undefined;
     }
     super.disconnectedCallback();
   }
 
-  async #initializeSandbox() {
+  private async initializeSandbox() {
     if (!this.iframe || !this.htmlContent) return;
 
     // Allow configuring the sandbox URL via env var for production deployment
@@ -107,7 +107,7 @@ export class McpAppsCustomComponent extends Root {
     const sandboxUrl = new URL(sandboxOrigin);
 
     // Set up the bridge. No MCP client needed because A2UI acts as the orchestrator.
-    this.#bridge = new AppBridge(null, { name: "A2UI Client Host", version: "1.0.0" }, {
+    this.bridge = new AppBridge(null, { name: "A2UI Client Host", version: "1.0.0" }, {
       serverTools: {},
       updateModelContext: { text: {} },
     }, {
@@ -118,7 +118,7 @@ export class McpAppsCustomComponent extends Root {
       }
     });
 
-    this.#bridge.onsizechange = ({ width, height }) => {
+    this.bridge.onsizechange = ({ width, height }) => {
       // Allow the view to dynamically resize the iframe container
       const from: Keyframe = {};
       const to: Keyframe = {};
@@ -135,12 +135,12 @@ export class McpAppsCustomComponent extends Root {
     };
 
     // Forward Tool Calls to the A2UI Action Dispatch
-    this.#bridge.oncalltool = async (params) => {
+    this.bridge.oncalltool = async (params) => {
       const actionName = params.name;
       const args = params.arguments || {};
 
       if (this.allowedTools.includes(actionName)) {
-        this.#dispatchAgentAction(actionName, args);
+        this.dispatchAgentAction(actionName, args);
         return { content: [{ type: "text", text: "Action dispatched to A2UI Agent" }] };
       } else {
         console.warn(`[McpAppsCustomComponent] Tool '${actionName}' blocked.`);
@@ -148,7 +148,7 @@ export class McpAppsCustomComponent extends Root {
       }
     };
 
-    this.#bridge.onloggingmessage = (params) => {
+    this.bridge.onloggingmessage = (params) => {
       console.log(`[MCP Sandbox ${params.level}]:`, params.data);
     };
 
@@ -170,16 +170,16 @@ export class McpAppsCustomComponent extends Root {
 
     // 3. Connect AppBridge via PostMessage transport.
     // We pass iframe.contentWindow to target just the sandbox proxy.
-    await this.#bridge.connect(new PostMessageTransport(this.iframe.contentWindow!, this.iframe.contentWindow!));
+    await this.bridge.connect(new PostMessageTransport(this.iframe.contentWindow!, this.iframe.contentWindow!));
 
     // 4. Send the Inner HTML UI resource to the sandbox to spin up the actual app.
-    await this.#bridge.sendSandboxResourceReady({
+    await this.bridge.sendSandboxResourceReady({
       html: this.htmlContent,
       sandbox: "allow-scripts allow-forms allow-popups allow-modals allow-same-origin"
     });
   }
 
-  #dispatchAgentAction(actionName: string, params: any) {
+  private dispatchAgentAction(actionName: string, params: any) {
     const context: v0_8.Types.Action["context"] = [];
     if (params && typeof params === 'object') {
       for (const [key, value] of Object.entries(params)) {

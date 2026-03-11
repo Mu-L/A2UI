@@ -50,15 +50,22 @@ class MarkdownDirective extends Directive {
    */
   render(value: string, markdownRenderer?: Types.MarkdownRenderer, markdownOptions?: Types.MarkdownRendererOptions) {
     if (markdownRenderer) {
-      const rendered = markdownRenderer(value, markdownOptions).then((value) => {
+      const result = markdownRenderer(value, markdownOptions) as any;
+      if (typeof result === 'string') {
+        return unsafeHTML(result);
+      }
+      const rendered = result.then((val: string) => {
         // `value` is a plain string, which we need to convert to a template
         // with the `unsafeHTML` directive.
         // It is the responsibility of the markdown renderer to sanitize the HTML.
-        return unsafeHTML(value);
-      })
+        return unsafeHTML(val);
+      });
       // The until directive lets us render a placeholder *until* the rendered
       // content resolves.
-      return until(rendered, html`<span class="no-markdown-renderer">${value}</span>`);
+      return until(
+        rendered,
+        html`<span class="no-markdown-renderer">${value}</span>`
+      );
     }
 
     if (!MarkdownDirective.defaultMarkdownWarningLogged) {
