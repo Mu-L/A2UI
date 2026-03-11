@@ -21,8 +21,6 @@ import {
     SANDBOX_RESOURCE_READY_METHOD
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 
-const content = document.getElementById('content');
-
 // Initialize AppBridge
 const bridge = new AppBridge(
     null, // No client in sandbox
@@ -56,7 +54,7 @@ window.addEventListener('message', async (event) => {
     const data = event.data;
     if (data && data.method === SANDBOX_RESOURCE_READY_METHOD) {
         const { html, sandbox } = data.params;
-        
+        const content = document.getElementById('content');
         if (html && content) {
             // Create an inner iframe with srcdoc to enable Javascript execution if any.
             const innerFrame = document.createElement('iframe');

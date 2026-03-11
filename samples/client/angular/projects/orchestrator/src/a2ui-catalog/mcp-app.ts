@@ -77,7 +77,7 @@ export class McpApp
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly content = input.required<Primitives.StringValue | null>();
-  protected readonly resolvedContent: Signal<string | null> = computed(() => {
+  protected readonly resolvedContent = computed<string | null>(() => {
     let rawContent = super.resolvePrimitive(this.content() ?? null);
     if (rawContent && rawContent.startsWith('url_encoded:')) {
       rawContent = decodeURIComponent(rawContent.substring(12));
@@ -85,13 +85,13 @@ export class McpApp
     return rawContent;
   });
 
-  private readonly contentUpdateEffect = effect(() => {
+  private readonly contentUpdate = effect(() => {
     const rawContent = this.resolvedContent();
     const bridge = this.appBridge();
     if (bridge && rawContent) {
       bridge.sendSandboxResourceReady({
         html: rawContent,
-        sandbox: 'allow-scripts allow-forms allow-popups',
+        sandbox: 'allow-scripts',
       }).catch(err => console.error('Failed to update sandbox content:', err));
     }
   });
@@ -117,6 +117,10 @@ export class McpApp
   ngOnDestroy() {
     if (this.messageHandler) {
       window.removeEventListener('message', this.messageHandler);
+    }
+    const bridge = this.appBridge();
+    if (bridge) {
+      bridge.close().catch(e => console.error('Error closing AppBridge on destroy:', e));
     }
   }
 
@@ -223,6 +227,12 @@ export class McpApp
     );
     await bridge.connect(transport);
 
+    // Clean up old bridge to prevent memory leaks and zombie event listeners.
+    const oldBridge = this.appBridge();
+    if (oldBridge) {
+      oldBridge.close().catch(e => console.error('Error closing previous AppBridge:', e));
+    }
+    // Set the new bridge.
     this.appBridge.set(bridge);
   }
 }
