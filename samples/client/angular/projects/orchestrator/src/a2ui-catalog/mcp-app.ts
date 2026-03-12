@@ -98,7 +98,7 @@ export class McpApp
 
   readonly allowedTools = input<string[]>([]);
   readonly title = input<Primitives.StringValue | null>();
-  protected readonly resolvedTitle: Signal<string | null> = computed(() =>
+  protected readonly resolvedTitle = computed<string | null>(() =>
     super.resolvePrimitive(this.title() ?? null),
   );
 
