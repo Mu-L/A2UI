@@ -21,6 +21,19 @@ import {
     SANDBOX_RESOURCE_READY_METHOD
 } from '@modelcontextprotocol/ext-apps/app-bridge';
 
+/**
+ * Note on "sandbox" terminology:
+ * The primary functionality of this unit (sandbox.html/ts) is to serve a sandboxed
+ * environment for the McpApp component. 
+ *
+ * The sandbox.html is simply a webpage that contains a sandboxed inner iframe.
+ * The `sandbox` property is an iframe attribute that acts as an allow-list rather than a
+ * block-list. By default (when it is ''), the iframe will not allow anything, ensuring
+ * the environment is as vacuum-sealed as possible. Individual features can be enabled
+ * by setting the `sandbox` property when the host (McpApp component) triggers the
+ * SANDBOX_RESOURCE_READY_METHOD
+ */
+
 // Initialize AppBridge
 const bridge = new AppBridge(
     null, // No client in sandbox
@@ -30,6 +43,9 @@ const bridge = new AppBridge(
         logging: {}
     }
 );
+
+// By default no features will be allowed for the sandbox iframe.
+const DEFAULT_SANDBOX_ALLOWED_FEATURES = '';
 
 bridge.oncalltool = async (params: any) => {
     // Forward tool calls to parent if needed, or handle locally
@@ -62,7 +78,7 @@ window.addEventListener('message', async (event) => {
             innerFrame.style.width = '100%';
             innerFrame.style.height = '100%';
             innerFrame.style.border = 'none';
-            innerFrame.sandbox = sandbox || '';
+            innerFrame.sandbox = sandbox || DEFAULT_SANDBOX_ALLOWED_FEATURES;
 
             // Clear any existing content and inject the new iframe
             content.innerHTML = '';
