@@ -26,17 +26,48 @@ export function registerContactComponents() {
     type: "object",
     properties: {
       chain: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            name: { type: "string" },
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          literalArray: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                name: { type: "string" },
+              },
+              required: ["title", "name"],
+            },
           },
-          required: ["title", "name"],
         },
       },
-      action: { $ref: "#/definitions/Action" },
+      action: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          context: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                key: { type: "string" },
+                value: {
+                  type: "object",
+                  properties: {
+                    path: { type: "string" },
+                    literalString: { type: "string" },
+                    literalNumber: { type: "number" },
+                    literalBoolean: { type: "boolean" },
+                  },
+                },
+              },
+              required: ["key", "value"],
+            },
+          },
+        },
+        required: ["name"],
+      },
     },
     required: ["chain"],
   });

@@ -276,7 +276,7 @@ export class A2UIContactFinder extends SignalWatcher(LitElement) {
       </div>`;
     }
 
-    const surfacesMap = this.#processor.getSurfaces();
+    const surfacesMap = new Map(this.#processor.getSurfaces());
     const surfaces = Array.from(surfacesMap.entries()).sort(([a], [b]) => {
       // "org-chart-view" comes first (left), "contact-card" second (right)
       if (a === 'org-chart-view') return -1;
@@ -384,6 +384,7 @@ export class A2UIContactFinder extends SignalWatcher(LitElement) {
     // this.#processor.clearSurfaces(); // Removed to allow partial updates
     this.#processor.processMessages(messages);
     this.renderVersion++; // Force re-render of surfaces
+    this.requestUpdate();
 
     const cardSurface = this.#processor.getSurfaces().get('contact-card');
     if (cardSurface) {

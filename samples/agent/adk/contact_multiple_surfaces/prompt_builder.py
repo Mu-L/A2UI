@@ -28,12 +28,18 @@ WORKFLOW_DESCRIPTION = """
 Buttons that represent the main action on a card or view (e.g., 'Follow', 'Email', 'Search') SHOULD include the `"primary": true` attribute.
 """
 
-UI_DESCRIPTION = f"""
+def get_ui_description() -> str:
+  import os
+  title_suffix = "(iFrame)"
+  if os.environ.get("USE_MCP_SANDBOX", "true").lower() == "true":
+    title_suffix = "(MCP Apps)"
+    
+  return f"""
 -   **For finding contacts (e.g., "Who is Alex Jordan?"):**
     a.  You MUST call the `get_contact_info` tool.
     b.  If the tool returns a **single contact**, you MUST use the `MULTI_SURFACE_EXAMPLE` template. Provide BOTH the Contact Card and the Org Chart in a single response.
     c.  If the tool returns **multiple contacts**, you MUST use the `CONTACT_LIST_EXAMPLE` template. Populate the `dataModelUpdate.contents` with the list of contacts for the "contacts" key.
-    d.  If the tool returns an **empty list**, respond with text only and an empty JSON list: "I couldn't find anyone by that name.{A2UI_OPEN_TAG}[]{A2UI_CLOSE_TAG}"
+    d.  If the tool returns an **empty list**, respond with text only and an empty JSON list: "I couldn't find anyone by that name.{{A2UI_OPEN_TAG}}[]{{A2UI_CLOSE_TAG}}"
 
 -   **For handling a profile view (e.g., "WHO_IS: Alex Jordan..."):**
     a.  You MUST call the `get_contact_info` tool with the specific name.
@@ -42,6 +48,9 @@ UI_DESCRIPTION = f"""
 -   **For handling actions (e.g., "USER_WANTS_TO_EMAIL: ..."):**
     a.  You MUST use the `ACTION_CONFIRMATION_EXAMPLE` template.
     b.  Populate the `dataModelUpdate.contents` with a confirmation title and message (e.g., title: "Email Drafted", message: "Drafting an email to Alex Jordan...").
+
+-   **For generating the Org Chart (`org-chart-view` dataModelUpdate or title Text):**
+    a.  You MUST set any title referring to the Organizational Chart to exactly "Organizational Chart {title_suffix}".
 """
 
 

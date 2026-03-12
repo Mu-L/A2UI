@@ -40,7 +40,7 @@ from prompt_builder import (
     get_text_prompt,
     ROLE_DESCRIPTION,
     WORKFLOW_DESCRIPTION,
-    UI_DESCRIPTION,
+    get_ui_description,
 )
 from tools import get_contact_info
 from a2ui.core.schema.constants import VERSION_0_8, A2UI_OPEN_TAG, A2UI_CLOSE_TAG
@@ -128,7 +128,7 @@ class ContactAgent:
         self.schema_manager.generate_system_prompt(
             role_description=ROLE_DESCRIPTION,
             workflow_description=WORKFLOW_DESCRIPTION,
-            ui_description=UI_DESCRIPTION,
+            ui_description=get_ui_description(),
             include_examples=True,
             include_schema=True,
             validate_examples=False,  # Missing inline_catalogs for OrgChart and WebFrame validation
@@ -145,7 +145,7 @@ class ContactAgent:
         tools=[get_contact_info],
     )
 
-  async def stream(self, query, session_id) -> AsyncIterable[dict[str, Any]]:
+  async def stream(self, query, session_id, client_ui_capabilities: dict[str, Any] | None = None) -> AsyncIterable[dict[str, Any]]:
     session_state = {"base_url": self.base_url}
 
     session = await self._runner.session_service.get_session(
@@ -169,7 +169,7 @@ class ContactAgent:
     current_query_text = query
 
     # Ensure schema was loaded
-    selected_catalog = self.schema_manager.get_selected_catalog()
+    selected_catalog = self.schema_manager.get_selected_catalog(client_ui_capabilities)
     if self.use_ui and not selected_catalog.catalog_schema:
       logger.error(
           "--- ContactAgent.stream: A2UI_SCHEMA is not loaded. "
