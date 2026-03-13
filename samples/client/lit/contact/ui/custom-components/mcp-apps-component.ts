@@ -22,7 +22,7 @@ import { AppBridge, PostMessageTransport } from "@modelcontextprotocol/ext-apps/
 import type { McpUiSandboxProxyReadyNotification } from "@modelcontextprotocol/ext-apps/app-bridge";
 
 @customElement("a2ui-mcp-apps-component")
-export class McpAppsCustomComponent extends Root {
+export class McpApp extends Root {
   static override styles = [
     ...Root.styles,
     css`
@@ -143,7 +143,7 @@ export class McpAppsCustomComponent extends Root {
         this.dispatchAgentAction(actionName, args);
         return { content: [{ type: "text", text: "Action dispatched to A2UI Agent" }] };
       } else {
-        console.warn(`[McpAppsCustomComponent] Tool '${actionName}' blocked.`);
+        console.warn(`[McpApp] Tool '${actionName}' blocked.`);
         throw new Error("Tool not allowed");
       }
     };

@@ -28,13 +28,7 @@ WORKFLOW_DESCRIPTION = """
 Buttons that represent the main action on a card or view (e.g., 'Follow', 'Email', 'Search') SHOULD include the `"primary": true` attribute.
 """
 
-def get_ui_description() -> str:
-  import os
-  title_suffix = "(iFrame)"
-  if os.environ.get("USE_MCP_SANDBOX", "true").lower() == "true":
-    title_suffix = "(MCP Apps)"
-    
-  return f"""
+UI_DESCRIPTION = f"""
 -   **For finding contacts (e.g., "Who is Alex Jordan?"):**
     a.  You MUST call the `get_contact_info` tool.
     b.  If the tool returns a **single contact**, you MUST use the `MULTI_SURFACE_EXAMPLE` template. Provide BOTH the Contact Card and the Org Chart in a single response.
@@ -48,14 +42,6 @@ def get_ui_description() -> str:
 -   **For handling actions (e.g., "USER_WANTS_TO_EMAIL: ..."):**
     a.  You MUST use the `ACTION_CONFIRMATION_EXAMPLE` template.
     b.  Populate the `dataModelUpdate.contents` with a confirmation title and message (e.g., title: "Email Drafted", message: "Drafting an email to Alex Jordan...").
-
--   **For generating the Org Chart (`org-chart-view` dataModelUpdate or title Text):**
-    a.  You MUST set any title referring to the Organizational Chart to exactly "Organizational Chart {title_suffix}".
-    
--   **For handling a chart node click (e.g., "ACTION: chart_node_click..." with context):**
-    a.  Extract the `clickedNodeName` from the context JSON.
-    b.  You MUST call the `get_contact_info` tool with that name.
-    c.  Use the `MULTI_SURFACE_EXAMPLE` template or `CHART_NODE_CLICK_EXAMPLE` to update the UI with the newly selected contact's details.
 """
 
 

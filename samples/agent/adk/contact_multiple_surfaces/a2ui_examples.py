@@ -32,21 +32,23 @@ EXAMPLE_FILES = {
 }
 
 FLOOR_PLAN_FILE = "floor_plan.json"
+LOCATION_SURFACE_ID = "location-surface"
 
 
 def load_floor_plan_example(html_content: str = "") -> list[dict]:
   """Constructs the JSON for the location surface displaying the floor plan."""
   import os
+  title_suffix = "(MCP Apps)" if os.environ.get("USE_MCP_SANDBOX", "true").lower() == "true" else "(iFrame)"
   return [
       {
           "beginRendering": {
-              "surfaceId": "location-surface",
+              "surfaceId": LOCATION_SURFACE_ID,
               "root": "floor-plan-card",
           }
       },
       {
           "surfaceUpdate": {
-              "surfaceId": "location-surface",
+              "surfaceId": LOCATION_SURFACE_ID,
               "components": [
                   {
                       "id": "floor-plan-card",
@@ -71,14 +73,14 @@ def load_floor_plan_example(html_content: str = "") -> list[dict]:
                       "component": {
                           "Text": {
                               "usageHint": "h2",
-                              "text": {"literalString": "Office Floor Plan"},
+                              "text": {"literalString": f"Office Floor Plan {title_suffix}"},
                           }
                       },
                   },
                   {
                       "id": "floor-plan-comp",
                       "component": {
-                          "McpAppsCustomComponent": {
+                          "McpApp": {
                               "htmlContent": html_content,
                               "height": 400,
                               "allowedTools": ["chart_node_click"],
@@ -115,7 +117,7 @@ def load_floor_plan_example(html_content: str = "") -> list[dict]:
 
 def load_close_modal_example() -> list[dict]:
   """Constructs the JSON for closing the floor plan modal."""
-  return [{"deleteSurface": {"surfaceId": "location-surface"}}]
+  return [{"deleteSurface": {"surfaceId": LOCATION_SURFACE_ID}}]
 
 def load_send_message_example(contact_name: str) -> str:
   """Constructs the JSON string for the send message confirmation."""

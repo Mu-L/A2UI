@@ -40,7 +40,7 @@ from prompt_builder import (
     get_text_prompt,
     ROLE_DESCRIPTION,
     WORKFLOW_DESCRIPTION,
-    get_ui_description,
+    UI_DESCRIPTION,
 )
 from tools import get_contact_info
 from a2ui.core.schema.constants import VERSION_0_8, A2UI_OPEN_TAG, A2UI_CLOSE_TAG
@@ -128,7 +128,7 @@ class ContactAgent:
         self.schema_manager.generate_system_prompt(
             role_description=ROLE_DESCRIPTION,
             workflow_description=WORKFLOW_DESCRIPTION,
-            ui_description=get_ui_description(),
+            ui_description=UI_DESCRIPTION,
             include_examples=True,
             include_schema=True,
             validate_examples=False,  # Missing inline_catalogs for OrgChart and WebFrame validation
@@ -144,6 +144,87 @@ class ContactAgent:
         instruction=instruction,
         tools=[get_contact_info],
     )
+
+  async def _handle_action(self, query: str) -> dict[str, Any] | None:
+    """Handles simulated UI actions like close_modal or view_location."""
+    if not query.startswith("ACTION:"):
+      return None
+
+    from a2ui_examples import load_floor_plan_example, load_close_modal_example, load_send_message_example
+    
+    if "send_message" in query:
+      logger.info("--- ContactAgent.stream: Detected send_message ACTION ---")
+      contact_name = "Unknown"
+      if "(contact:" in query:
+        try:
+          contact_name = query.split("(contact:")[1].split(")")[0].strip()
+        except Exception:
+          pass
+      json_content = load_send_message_example(contact_name)
+      final_response_content = (
+          f"Message sent to {contact_name}\n"
+          f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
+      )
+      
+      return {
+          "is_task_complete": True,
+          "parts": parse_response_to_parts(final_response_content),
+      }
+
+    elif "view_location" in query:
+      logger.info("--- ContactAgent.stream: Detected view_location ACTION ---")
+      # Action maps to opening the FloorPlan overlay to view the contact's location
+      from mcp import ClientSession
+      from mcp.client.sse import sse_client
+      import os
+
+      sse_url = os.environ.get("FLOOR_PLAN_SERVER_URL", "http://127.0.0.1:8000/sse")
+      try:
+        async with sse_client(sse_url) as (read, write):
+          async with ClientSession(read, write) as mcp_session:
+            await mcp_session.initialize()
+            logger.info("--- ContactAgent: Fetching ui://floor-plan-server/map from persistent SSE server ---")
+            result = await mcp_session.read_resource("ui://floor-plan-server/map")
+
+            if not result.contents or len(result.contents) == 0:
+              raise ValueError("No content returned from floor plan server")
+            html_content = result.contents[0].text
+      except Exception as e:
+        logger.error(f"Failed to fetch floor plan: {e}")
+        return {
+            "is_task_complete": True, 
+            "parts": parse_response_to_parts(f"Failed to load floor plan data: {str(e)}")
+        }
+
+      json_content = json.dumps(load_floor_plan_example(html_content))
+      logger.info(f"--- ContactAgent.stream: Sending Floor Plan ---")
+      
+      final_response_content = (
+          "Here is the floor plan.\n"
+          f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
+      )
+
+      return {
+          "is_task_complete": True, 
+          "parts": parse_response_to_parts(final_response_content)
+      }
+
+    elif "close_modal" in query:
+      logger.info("--- ContactAgent.stream: Handling close_modal ACTION ---")
+      # Action maps to closing the FloorPlan overlay
+      json_content = json.dumps(load_close_modal_example())
+      
+      final_response_content = (
+          "Modal closed.\n"
+          f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
+      )
+
+      return {
+          "is_task_complete": True, 
+          "parts": parse_response_to_parts(final_response_content)
+      }
+      
+    return None
 
   async def stream(self, query, session_id, client_ui_capabilities: dict[str, Any] | None = None) -> AsyncIterable[dict[str, Any]]:
     session_state = {"base_url": self.base_url}
@@ -193,82 +274,10 @@ class ContactAgent:
       logger.info(f"--- ContactAgent.stream: Received query: '{query}' ---")
 
       # --- Check for User Action ---
-      # If the query looks like an action (starts with "ACTION:"), parsing it to see which action
-      if query.startswith("ACTION:"):
-        from a2ui_examples import load_floor_plan_example, load_close_modal_example, load_send_message_example
-        
-        if "send_message" in query:
-          logger.info("--- ContactAgent.stream: Detected send_message ACTION ---")
-          contact_name = "Unknown"
-          if "(contact:" in query:
-            try:
-              contact_name = query.split("(contact:")[1].split(")")[0].strip()
-            except Exception:
-              pass
-          json_content = load_send_message_example(contact_name)
-          final_response_content = (
-              f"Message sent to {contact_name}\n"
-              f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
-          )
-          
-          final_parts = parse_response_to_parts(final_response_content)
-
-          yield {
-              "is_task_complete": True,
-              "parts": final_parts,
-          }
-          return
-
-        elif "view_location" in query:
-          logger.info("--- ContactAgent.stream: Detected view_location ACTION ---")
-          # Action maps to opening the FloorPlan overlay to view the contact's location
-          from mcp import ClientSession
-          from mcp.client.sse import sse_client
-          import os
-
-          sse_url = os.environ.get("FLOOR_PLAN_SERVER_URL", "http://127.0.0.1:8000/sse")
-          try:
-            async with sse_client(sse_url) as (read, write):
-              async with ClientSession(read, write) as mcp_session:
-                await mcp_session.initialize()
-                logger.info("--- ContactAgent: Fetching ui://floor-plan-server/map from persistent SSE server ---")
-                result = await mcp_session.read_resource("ui://floor-plan-server/map")
-
-                if not result.contents or len(result.contents) == 0:
-                  raise ValueError("No content returned from floor plan server")
-                html_content = result.contents[0].text
-          except Exception as e:
-            logger.error(f"Failed to fetch floor plan: {e}")
-            yield {"is_task_complete": True, "parts": parse_response_to_parts(f"Failed to load floor plan data: {str(e)}")}
-            return
-
-          json_content = json.dumps(load_floor_plan_example(html_content))
-          logger.info(f"--- ContactAgent.stream: Sending Floor Plan ---")
-          
-          final_response_content = (
-              "Here is the floor plan.\n"
-              f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
-          )
-
-          final_parts = parse_response_to_parts(final_response_content)
-
-          yield {"is_task_complete": True, "parts": final_parts}
-          return
-
-        elif "close_modal" in query:
-          logger.info("--- ContactAgent.stream: Handling close_modal ACTION ---")
-          # Action maps to closing the FloorPlan overlay
-          json_content = json.dumps(load_close_modal_example())
-          
-          final_response_content = (
-              "Modal closed.\n"
-              f"{A2UI_OPEN_TAG}\n{json_content}\n{A2UI_CLOSE_TAG}"
-          )
-
-          final_parts = parse_response_to_parts(final_response_content)
-
-          yield {"is_task_complete": True, "parts": final_parts}
-          return
+      action_response = await self._handle_action(query)
+      if action_response:
+        yield action_response
+        return
 
       current_message = types.Content(
           role="user", parts=[types.Part.from_text(text=current_query_text)]

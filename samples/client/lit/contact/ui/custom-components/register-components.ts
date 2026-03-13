@@ -18,7 +18,7 @@ import { componentRegistry } from "@a2ui/lit/ui";
 import { OrgChart } from "./org-chart.js";
 import { WebFrame } from "./web-frame.js";
 import { PremiumTextField } from "./premium-text-field.js";
-import { McpAppsCustomComponent } from "./mcp-apps-component.js";
+import { McpApp } from "./mcp-apps-component.js";
 
 export function registerContactComponents() {
   // Register OrgChart
@@ -79,8 +79,8 @@ export function registerContactComponents() {
     "premium-text-field"
   );
 
-  // Register McpAppsCustomComponent
-  componentRegistry.register("McpAppsCustomComponent", McpAppsCustomComponent, "a2ui-mcp-apps-component", {
+  // Register McpApp
+  componentRegistry.register("McpApp", McpApp, "a2ui-mcp-apps-component", {
     type: "object",
     properties: {
       resourceUri: { type: "string" },
