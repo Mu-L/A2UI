@@ -12,46 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Validate A2UI specification examples
+name: Lit renderer
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'specification/**/json/**'
-      - '.github/workflows/validate_specifications.yml'
-      - 'specification/scripts/validate.py'
+      - 'renderers/lit/**'
+      - 'renderers/web_core/**'
+      - '.github/workflows/lit_build_and_test.yml'
   pull_request:
     paths:
-      - 'specification/**/json/**'
-      - '.github/workflows/validate_specifications.yml'
-      - 'specification/scripts/validate.py'
+      - 'renderers/lit/**'
+      - 'renderers/web_core/**'
+      - '.github/workflows/lit_build_and_test.yml'
 
 jobs:
-  validate:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+      - name: Install web_core dependencies
+        working-directory: ./renderers/web_core
+        run: npm i
 
-      - name: Install dependencies
-        working-directory: ./specification/v0_9/test
-        run: pnpm install
+      - name: Build web_core
+        working-directory: ./renderers/web_core
+        run: npm run build
 
-      - name: Run validation script
-        run: python3 specification/scripts/validate.py
+      - name: Install Lit renderer dependencies
+        working-directory: ./renderers/lit
+        run: npm i
+
+      - name: Build Lit renderer
+        working-directory: ./renderers/lit
+        run: npm run build
+
+      - name: Run Lit renderer tests
+        working-directory: ./renderers/lit
+        run: npm test
