@@ -29,6 +29,18 @@ const ICON_MAP: Record<string, string> = {
   starOff: "star_border",
 };
 
+const ICON_NAME_OVERRIDES: Record<string, string> = {
+  "play": "play_arrow",
+  "rewind": "fast_rewind",
+  "favoriteOff": "favorite_border",
+  "starOff": "star_border",
+};
+
+function toMaterialSymbol(name: string): string {
+  if (ICON_NAME_OVERRIDES[name]) return ICON_NAME_OVERRIDES[name];
+  return name.replace(/[A-Z]/g, (letter) => "_" + letter.toLowerCase());
+}
+
 @customElement("a2ui-icon")
 export class A2uiIconElement extends BasicCatalogA2uiLitElement<typeof IconApi> {
   /**
@@ -74,11 +86,10 @@ export class A2uiIconElement extends BasicCatalogA2uiLitElement<typeof IconApi> 
     const props = this.controller.props;
     if (!props) return nothing;
 
-    const rawName =
-      typeof props.name === "string" ? props.name : (props.name as any)?.path;
-    const name = rawName ? this.getIconName(rawName) : "";
-
-    return html`<span class="material-symbol">${name}</span>`;
+    const iconName = typeof props.name === "string"
+      ? toMaterialSymbol(props.name)
+      : (props.name as any)?.path;
+    return html`<span class="material-symbol">${iconName}</span>`;
   }
 }
 
